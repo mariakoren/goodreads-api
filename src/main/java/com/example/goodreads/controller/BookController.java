@@ -1,8 +1,12 @@
 package com.example.goodreads.controller;
 
 import com.example.goodreads.model.Book;
+import com.example.goodreads.model.Comment;
+import com.example.goodreads.service.BookNotFoundException;
 import com.example.goodreads.service.BookService;
 //import com.example.goodreads.service.CommentService;
+import com.example.goodreads.service.CommentNotFoundException;
+import com.example.goodreads.service.CommentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,30 +32,13 @@ import java.util.Objects;
 public class BookController {
     private final BookService bookService;
 
-//    @Autowired
-//    private CommentService commentService;
+    @Autowired
+    private CommentService commentService;
 
     public BookController(BookService bookService) {
         this.bookService = bookService;
     }
 
-//    @GetMapping("/")
-//    @PreAuthorize("hasRole('client_user')")
-//    public List<Book> listAllBooks() {
-//        return bookService.getAllBooks();
-//    }
-//
-//    @GetMapping("/search")
-//    @PreAuthorize("hasRole('client_user')")
-//    public List<Book> searchBooksByTitle(@RequestParam("title") String title) {
-//        return bookService.findBooksByTitle(title);
-//    }
-//
-//    @GetMapping("/{id}")
-//    @PreAuthorize("hasRole('client_user')")
-//    public Book getBookById(@PathVariable("id") int id) {
-//        return bookService.findBookById(id);
-//    }
 
     @GetMapping("/")
     public ResponseEntity<ApiResponse> listAllBooks() {
@@ -103,7 +90,6 @@ public class BookController {
         return ResponseEntity.ok(new ApiResponse("Sukces", book));
     }
 
-
     @PostMapping("/")
     public ResponseEntity<ApiResponse> addBook(@Valid @RequestBody Book book, BindingResult bindingResult) {
         if (!hasClientAdminRole()) {
@@ -111,14 +97,8 @@ public class BookController {
                     .body(new ApiResponse("Brak uprawnień do wykonania tej operacji"));
         }
 
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            for (FieldError error : bindingResult.getFieldErrors()) {
-                errors.put(error.getField(), error.getDefaultMessage());
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse("Niepoprawne dane: " + errors));
-        }
+        ResponseEntity<ApiResponse> errors = getApiResponseResponseEntity(bindingResult);
+        if (errors != null) return errors;
 
         try {
             Book savedBook = bookService.addBook(book);
@@ -129,6 +109,94 @@ public class BookController {
                     .body(new ApiResponse("Wystąpił błąd podczas dodawania książki: " + ex.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteBook(@PathVariable Long id) {
+        if (!hasClientAdminRole()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("Brak uprawnień do wykonania tej operacji"));
+        }
+
+        try {
+            boolean deleted = bookService.deleteBook(id);
+            if (deleted) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ApiResponse("Książka została pomyślnie usunięta."));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse("Nie znaleziono książki o podanym ID."));
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Wystąpił błąd podczas usuwania książki: " + ex.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/{bookId}/addComment")
+    public ResponseEntity<ApiResponse> addComment(@PathVariable("bookId") Long bookId,
+                                                  @RequestBody @Valid Comment comment,
+                                                  BindingResult bindingResult) {
+
+        if (!hasClientRole()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("Brak uprawnień do wykonania tej operacji"));
+        }
+
+        ResponseEntity<ApiResponse> errors = getApiResponseResponseEntity(bindingResult);
+        if (errors != null) return errors;
+
+
+        try {
+            commentService.addComment(bookId, comment);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse("Komentarz został dodany do książki o ID: " + bookId));
+        } catch (BookNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Wystąpił błąd podczas dodawania komentarza: " + ex.getMessage()));
+        }
+    }
+
+    private ResponseEntity<ApiResponse> getApiResponseResponseEntity(BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse("Niepoprawne dane: " + errors));
+        }
+        return null;
+    }
+
+    @DeleteMapping("/{bookId}/deleteComment/{commentId}")
+    public ResponseEntity<ApiResponse> deleteComment(@PathVariable("bookId") Long bookId,
+                                                     @PathVariable("commentId") Long commentId) {
+
+        if (!hasClientAdminRole()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("Brak uprawnień do wykonania tej operacji"));
+        }
+
+        try {
+            commentService.deleteComment(bookId, commentId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Komentarz o ID: " + commentId + " został usunięty z książki o ID: " + bookId));
+        } catch (CommentNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Wystąpił błąd podczas usuwania komentarza: " + ex.getMessage()));
+        }
+    }
+
+
+
+
 
     private boolean hasClientRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

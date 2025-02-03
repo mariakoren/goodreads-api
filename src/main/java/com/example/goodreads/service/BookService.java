@@ -32,6 +32,12 @@ public class BookService {
     }
 
 
-
-
+    public boolean deleteBook(Long id) {
+        Optional<Book> bookOptional = bookRepository.findById(id);
+        if (bookOptional.isPresent()) {
+            bookRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }
