@@ -53,4 +53,8 @@ public class BookService {
 
         return bookRepository.save(book);
     }
+
+    public List<Object[]> getBooksWithTotalRatings() {
+        return bookRepository.findTotalRatingForBooks();
+    }
 }

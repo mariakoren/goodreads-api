@@ -229,6 +229,11 @@ public class BookController {
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_client_admin"));
     }
 
+    @GetMapping("/ratings")
+    public List<Object[]> getBooksWithRatings() {
+        return bookService.getBooksWithTotalRatings();
+    }
+
 
 
 }
