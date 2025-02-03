@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -41,6 +42,10 @@ public class CommentService {
             throw new CommentNotFoundException("Komentarz o podanym ID nie istnieje");
         }
         commentRepository.deleteById(commentId);
+    }
+
+    public Optional<Comment> findById(Long commentId) {
+        return commentRepository.findById(commentId);
     }
 }
 

@@ -1,6 +1,7 @@
 package com.example.goodreads.controller;
 
 import com.example.goodreads.model.Book;
+import com.example.goodreads.model.Comment;
 import com.example.goodreads.service.BookService;
 import com.example.goodreads.service.CommentNotFoundException;
 import com.example.goodreads.service.CommentService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/books")
@@ -110,6 +112,49 @@ public class AdminController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse("Wystąpił błąd podczas usuwania komentarza: " + ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/{bookId}/editComment/{commentId}")
+    public ResponseEntity<ApiResponse> editComment(@PathVariable("bookId") Long bookId,
+                                                   @PathVariable("commentId") Long commentId,
+                                                   @RequestBody @Valid Comment comment,
+                                                   BindingResult bindingResult) {
+
+
+        if (bindingResult.hasErrors()) {
+            StringBuilder errorMessages = new StringBuilder();
+            bindingResult.getAllErrors().forEach(error -> errorMessages.append(error.getDefaultMessage()).append("\n"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse("Błędy walidacji: " + errorMessages.toString()));
+        }
+
+
+        if (!bookService.existsById(bookId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Książka o podanym ID nie istnieje"));
+        }
+
+
+        Optional<Comment> existingComment = commentService.findById(commentId);
+        if (existingComment.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Komentarz o podanym ID nie istnieje"));
+        }
+
+        // Aktualizacja komentarza
+        try {
+            Comment updatedComment = existingComment.get();
+            updatedComment.setContent(comment.getContent());
+            updatedComment.setRating(comment.getRating());
+
+            commentService.saveComment(updatedComment);
+
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Komentarz został zaktualizowany."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Wystąpił błąd podczas edytowania komentarza: " + ex.getMessage()));
         }
     }
 

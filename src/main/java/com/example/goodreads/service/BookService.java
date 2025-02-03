@@ -44,6 +44,10 @@ public class BookService {
         return false;
     }
 
+    public boolean existsById(Long bookId) {
+        return bookRepository.existsById(bookId);
+    }
+
     public Book updateBook(Long id, Book bookDetails) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Nie znaleziono książki o ID: " + id));
