@@ -25,4 +25,19 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             "ORDER BY commentCount DESC")
     List<Object[]> findTop3MostCommentedBooks(Pageable pageable);
 
+    @Query("SELECT b, " +
+            "       COUNT(ub) AS readCount, " +
+            "       AVG(c.rating) AS averageRating " +
+            "FROM Book b " +
+            "LEFT JOIN UsersBook ub ON ub.book = b AND ub.status = com.example.goodreads.model.UsersBook.Status.READED " +
+            "LEFT JOIN Comment c ON c.book = b " +
+            "GROUP BY b " +
+            "ORDER BY readCount DESC, AVG(c.rating) DESC")
+    List<Object[]> findBooksWithReadCountAndAverageRating();
+
+    @Query("SELECT b, AVG(LENGTH(c.content)) FROM Book b " +
+            "LEFT JOIN b.comments c GROUP BY b.id " +
+            "ORDER BY AVG(LENGTH(c.content)) ASC")
+    List<Object[]> findAverageCommentLengthPerBook();
+
 }

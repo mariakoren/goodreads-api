@@ -239,6 +239,17 @@ public class BookController {
         return bookService.getTop3MostCommentedBooks();
     }
 
+    @GetMapping("/average-readed")
+    public ResponseEntity<List<Object[]>> getBooksWithStatistics() {
+        List<Object[]> booksWithStatistics = bookService.getBooksWithReadCountAndAverageRating();
+        return ResponseEntity.ok(booksWithStatistics);
+    }
+
+    @GetMapping("/average-comment-length")
+    public List<Object[]> getAverageCommentLengthPerBook() {
+        return bookService.getAverageCommentLengthPerBook();
+    }
+
 
 
 }

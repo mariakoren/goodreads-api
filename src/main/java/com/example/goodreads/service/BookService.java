@@ -65,4 +65,12 @@ public class BookService {
         return bookRepository.findTop3MostCommentedBooks(pageable);
     }
 
+    public List<Object[]> getBooksWithReadCountAndAverageRating() {
+        return bookRepository.findBooksWithReadCountAndAverageRating();
+    }
+
+    public List<Object[]> getAverageCommentLengthPerBook() {
+        return bookRepository.findAverageCommentLengthPerBook();
+    }
+
 }
