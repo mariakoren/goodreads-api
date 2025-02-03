@@ -2,6 +2,7 @@ package com.example.goodreads.service;
 
 import com.example.goodreads.model.Book;
 import com.example.goodreads.repository.BookRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,5 +40,17 @@ public class BookService {
             return true;
         }
         return false;
+    }
+
+    public Book updateBook(Long id, Book bookDetails) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Nie znaleziono książki o ID: " + id));
+
+        book.setTitle(bookDetails.getTitle());
+        book.setAuthor(bookDetails.getAuthor());
+        book.setDescription(bookDetails.getDescription());
+        book.setGenre(bookDetails.getGenre());
+
+        return bookRepository.save(book);
     }
 }

@@ -4,19 +4,15 @@ import com.example.goodreads.model.Book;
 import com.example.goodreads.model.Comment;
 import com.example.goodreads.service.BookNotFoundException;
 import com.example.goodreads.service.BookService;
-//import com.example.goodreads.service.CommentService;
 import com.example.goodreads.service.CommentNotFoundException;
 import com.example.goodreads.service.CommentService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -107,6 +103,28 @@ public class BookController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse("Wystąpił błąd podczas dodawania książki: " + ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateBook(@PathVariable Long id, @Valid @RequestBody Book book, BindingResult bindingResult) {
+        if (!hasClientAdminRole()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("Brak uprawnień do wykonania tej operacji"));
+        }
+
+        ResponseEntity<ApiResponse> errors = getApiResponseResponseEntity(bindingResult);
+        if (errors != null) return errors;
+
+        try {
+            Book updatedBook = bookService.updateBook(id, book);
+            return ResponseEntity.ok(new ApiResponse("Książka została pomyślnie zaktualizowana: " + updatedBook.getTitle()));
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Nie znaleziono książki o podanym ID"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Wystąpił błąd podczas aktualizacji książki: " + ex.getMessage()));
         }
     }
 
