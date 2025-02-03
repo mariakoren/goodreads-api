@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class BookService {
@@ -57,4 +59,10 @@ public class BookService {
     public List<Object[]> getBooksWithTotalRatings() {
         return bookRepository.findTotalRatingForBooks();
     }
+
+    public List<Object[]> getTop3MostCommentedBooks() {
+        Pageable pageable = PageRequest.of(0, 3); // Ograniczenie do 3 książek
+        return bookRepository.findTop3MostCommentedBooks(pageable);
+    }
+
 }

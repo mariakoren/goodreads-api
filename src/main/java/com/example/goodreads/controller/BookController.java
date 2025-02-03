@@ -234,6 +234,11 @@ public class BookController {
         return bookService.getBooksWithTotalRatings();
     }
 
+    @GetMapping("/top3-commented")
+    public List<Object[]> getTop3MostCommentedBooks() {
+        return bookService.getTop3MostCommentedBooks();
+    }
+
 
 
 }
