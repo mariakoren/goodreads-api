@@ -193,6 +193,14 @@ public class AdminController {
                 : ResponseEntity.ok(averageCommentLength);
     }
 
+    @GetMapping("/readers-count")
+    public ResponseEntity<List<Object[]>> getBooksWithReadersCount() {
+        List<Object[]> booksWithReaders = bookService.getBooksWithReadersCount();
+        return booksWithReaders.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(booksWithReaders);
+    }
+
 
 
 }

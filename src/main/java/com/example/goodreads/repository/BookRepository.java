@@ -40,4 +40,14 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             "ORDER BY AVG(LENGTH(c.content)) ASC")
     List<Object[]> findAverageCommentLengthPerBook();
 
+
+    @Query("""
+    SELECT b, COUNT(ub)
+    FROM Book b
+    LEFT JOIN UsersBook ub ON b.id = ub.book.id
+    GROUP BY b
+    """)
+    List<Object[]> findBooksWithReadersCount();
+
+
 }

@@ -77,4 +77,7 @@ public class BookService {
         return bookRepository.findAverageCommentLengthPerBook();
     }
 
+    public List<Object[]> getBooksWithReadersCount() {
+        return bookRepository.findBooksWithReadersCount();
+    }
 }
